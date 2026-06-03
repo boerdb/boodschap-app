@@ -18,7 +18,7 @@ interface MockState {
   householdId: number;
   householdName: string;
   inviteCode: string;
-  preferredStore: StoreId | null;
+  preferredStores: StoreId[];
   users: MockUser[];
   nextItemId: number;
   sessions: Map<string, MockSession>;
@@ -35,7 +35,7 @@ function getState(): MockState {
       householdId: 1,
       householdName: "Thuis",
       inviteCode: "THUIS",
-      preferredStore: null,
+      preferredStores: [],
       users: [
         { id: 1, displayName: "Ben" },
         { id: 2, displayName: "Ineke" },
@@ -131,10 +131,10 @@ export function mockDeleteItem(itemId: number): boolean {
   return true;
 }
 
-export function mockPreferredStore(): StoreId | null {
-  return getState().preferredStore;
+export function mockPreferredStores(): StoreId[] {
+  return [...getState().preferredStores];
 }
 
-export function mockSetPreferredStore(store: StoreId | null): void {
-  getState().preferredStore = store;
+export function mockSetPreferredStores(stores: StoreId[]): void {
+  getState().preferredStores = [...stores];
 }

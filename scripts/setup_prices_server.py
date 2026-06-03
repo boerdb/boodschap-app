@@ -49,7 +49,7 @@ def main() -> int:
     safe_print(f"Verbinden {DB_USER}@{DB_HOST} (migraties)…")
     ssh_db.connect(DB_HOST, username=DB_USER, password=PASSWORD, timeout=30)
 
-    for mig in ["002_prices.sql", "003_checkjebon_dataset.sql"]:
+    for mig in ["002_prices.sql", "003_checkjebon_dataset.sql", "004_preferred_stores.sql"]:
         local = os.path.join(ROOT, "sql", "migrations", mig)
         remote_tmp = f"/tmp/boodschap_{mig}"
         sftp = ssh_db.open_sftp()

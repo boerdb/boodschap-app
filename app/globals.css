@@ -415,6 +415,61 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.preferred-store-pick {
+  margin-bottom: 0.5rem;
+}
+
+.preferred-store-pick-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--shell-text);
+}
+
+.preferred-store-pick-hint {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.75rem;
+  color: var(--shell-text-muted);
+}
+
+.preferred-store-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.preferred-store-chip {
+  border: 1px solid var(--shell-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  background: var(--shell-bg);
+  color: var(--shell-text);
+  cursor: pointer;
+}
+
+.preferred-store-chip.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--shell-bg));
+  font-weight: 600;
+}
+
+.preferred-store-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.preferred-store-clear {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--shell-text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .price-store-list {
   list-style: none;
   margin: 0;

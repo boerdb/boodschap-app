@@ -1,7 +1,7 @@
 "use client";
 
 import type { PriceQuote, StoreId } from "@/lib/api/types";
-import { STORE_OPTIONS } from "@/lib/prices/store-options";
+import { PreferredStorePicker } from "@/components/prices/PreferredStorePicker";
 
 function formatEuro(cents: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -14,8 +14,8 @@ interface PriceComparisonProps {
   quote: PriceQuote | null;
   loading?: boolean;
   error?: string | null;
-  preferredStore: StoreId | null;
-  onPreferredStoreChange?: (store: StoreId | null) => void;
+  preferredStores: StoreId[];
+  onPreferredStoresChange?: (stores: StoreId[]) => void;
   compact?: boolean;
 }
 
@@ -23,8 +23,8 @@ export function PriceComparison({
   quote,
   loading,
   error,
-  preferredStore,
-  onPreferredStoreChange,
+  preferredStores,
+  onPreferredStoresChange,
   compact = false,
 }: PriceComparisonProps) {
   if (loading) {
@@ -37,7 +37,9 @@ export function PriceComparison({
     return null;
   }
 
-  const { lowest, preferred, prices, sourceNote, cached } = quote;
+  const { lowest, preferred, preferredPrices, prices, sourceNote, cached } =
+    quote;
+  const preferredSet = new Set(preferredStores);
 
   return (
     <div className={`price-panel ${compact ? "price-panel-compact" : ""}`}>
@@ -48,41 +50,37 @@ export function PriceComparison({
             Laagste: {formatEuro(lowest.priceCents)} bij {lowest.storeLabel}
           </span>
         )}
-        {preferred && preferred.store !== lowest?.store && (
+        {preferred &&
+          preferred.store !== lowest?.store &&
+          preferredStores.length === 1 && (
+            <span className="price-preferred">
+              Jouw winkel: {formatEuro(preferred.priceCents)} bij{" "}
+              {preferred.storeLabel}
+            </span>
+          )}
+        {preferredPrices.length > 1 && (
           <span className="price-preferred">
-            Jouw winkel: {formatEuro(preferred.priceCents)} bij{" "}
-            {preferred.storeLabel}
+            Jouw winkels:{" "}
+            {preferredPrices
+              .map((p) => `${p.storeLabel} ${formatEuro(p.priceCents)}`)
+              .join(" · ")}
           </span>
         )}
       </div>
 
-      {onPreferredStoreChange && (
-        <label className="price-store-pick">
-          <span>Voorkeurswinkel</span>
-          <select
-            className="input"
-            value={preferredStore ?? ""}
-            onChange={(e) =>
-              onPreferredStoreChange(
-                e.target.value ? (e.target.value as StoreId) : null
-              )
-            }
-          >
-            <option value="">Geen voorkeur</option>
-            {STORE_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      {onPreferredStoresChange && (
+        <PreferredStorePicker
+          value={preferredStores}
+          onChange={onPreferredStoresChange}
+          compact={compact}
+        />
       )}
 
       <ul className="price-store-list">
         {prices.map((p) => (
           <li
             key={p.store}
-            className={`price-store-row ${p.store === lowest?.store ? "is-lowest" : ""} ${p.store === preferredStore ? "is-preferred" : ""}`}
+            className={`price-store-row ${p.store === lowest?.store ? "is-lowest" : ""} ${preferredSet.has(p.store) ? "is-preferred" : ""}`}
           >
             <span className="price-store-name">{p.storeLabel}</span>
             <span className="price-store-amount">

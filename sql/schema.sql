@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS households (
   name VARCHAR(120) NOT NULL,
   invite_code VARCHAR(32) NOT NULL UNIQUE,
   preferred_store VARCHAR(32) NULL,
+  preferred_stores JSON NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 

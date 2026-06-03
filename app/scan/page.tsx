@@ -9,7 +9,7 @@ import {
   addListItem,
   fetchProductPrices,
   lookupOff,
-  setPreferredStore,
+  setPreferredStores,
 } from "@/lib/api/client";
 import type { PriceQuote, StoreId } from "@/lib/api/types";
 import { PriceComparison } from "@/components/prices/PriceComparison";
@@ -22,7 +22,13 @@ export default function ScanPage() {
   useEffect(() => {
     const s = getSession();
     setSessionState(s);
-    setPreferredStoreState(s?.preferredStore ?? null);
+    setPreferredStoresState(
+      s?.preferredStores?.length
+        ? s.preferredStores
+        : s?.preferredStore
+          ? [s.preferredStore]
+          : []
+    );
   }, []);
   const [status, setStatus] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
@@ -36,9 +42,7 @@ export default function ScanPage() {
   const [priceQuote, setPriceQuote] = useState<PriceQuote | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
-  const [preferredStore, setPreferredStoreState] = useState<StoreId | null>(
-    null
-  );
+  const [preferredStores, setPreferredStoresState] = useState<StoreId[]>([]);
 
   useEffect(() => {
     if (!getSession()?.token) router.replace("/login");
@@ -171,13 +175,19 @@ export default function ScanPage() {
             quote={priceQuote}
             loading={priceLoading}
             error={priceError}
-            preferredStore={preferredStore}
-            onPreferredStoreChange={(store) => {
-              setPreferredStoreState(store);
-              void setPreferredStore(store)
+            preferredStores={preferredStores}
+            onPreferredStoresChange={(stores) => {
+              setPreferredStoresState(stores);
+              void setPreferredStores(stores)
                 .then(() => {
                   const s = getSession();
-                  if (s) setSession({ ...s, preferredStore: store });
+                  if (s) {
+                    setSession({
+                      ...s,
+                      preferredStores: stores,
+                      preferredStore: stores[0] ?? null,
+                    });
+                  }
                 })
                 .catch(() => {});
             }}

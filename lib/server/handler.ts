@@ -5,10 +5,14 @@ import { normalizeStoreId } from "@/lib/server/prices/stores";
 import type { StoreId } from "@/lib/server/prices/types";
 import { hasRedisUrl, redisPing } from "@/lib/db/redis";
 import {
-  getHouseholdPreferredStore,
+  normalizePreferredStores,
+  parsePreferredStoresJson,
+} from "@/lib/prices/preferred-stores";
+import {
+  getHouseholdPreferredStores,
   getPriceDatasetStatus,
   getProductPrices,
-  setHouseholdPreferredStore,
+  setHouseholdPreferredStores,
 } from "@/lib/server/prices/service";
 import * as mock from "./mock-store";
 
@@ -32,12 +36,20 @@ function rowToItem(row: RowDataPacket): ListItem {
   };
 }
 
+function parseSessionPreferredStores(row: RowDataPacket): StoreId[] {
+  return parsePreferredStoresJson(
+    row.preferredStoresJson ?? row.preferred_stores,
+    row.preferredStoreLegacy ?? row.preferred_store
+  );
+}
+
 async function dbSession(token: string) {
   const pool = getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT s.user_id AS userId, s.household_id AS householdId,
             u.display_name AS displayName, h.name AS householdName,
-            h.preferred_store AS preferredStore
+            h.preferred_stores AS preferredStoresJson,
+            h.preferred_store AS preferredStoreLegacy
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      JOIN households h ON h.id = s.household_id
@@ -80,7 +92,12 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
     if (!useDb) {
       const session = mock.mockLogin(displayName, inviteCode);
       if (!session) return json({ error: "Onbekende huishoudcode" }, 404);
-      return json(session);
+      const preferredStores = mock.mockPreferredStores();
+      return json({
+        ...session,
+        preferredStores,
+        preferredStore: preferredStores[0] ?? null,
+      });
     }
     const pool = getPool();
     const [hh] = await pool.execute<RowDataPacket[]>(
@@ -110,12 +127,18 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
        VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 90 DAY))`,
       [sessionToken, userId, hh[0].id]
     );
+    const preferredStores = await getHouseholdPreferredStores(
+      pool,
+      Number(hh[0].id)
+    );
     return json({
       token: sessionToken,
       userId,
       displayName: resolvedName,
       householdId: Number(hh[0].id),
       householdName: hh[0].name,
+      preferredStores,
+      preferredStore: preferredStores[0] ?? null,
     });
   }
 
@@ -125,16 +148,23 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
       const s = mock.mockSession(token);
       if (!s) return json({ error: "Sessie verlopen" }, 401);
       const { token: _t, ...rest } = s;
-      return json({ ...rest, preferredStore: mock.mockPreferredStore() });
+      const preferredStores = mock.mockPreferredStores();
+      return json({
+        ...rest,
+        preferredStores,
+        preferredStore: preferredStores[0] ?? null,
+      });
     }
     const s = await dbSession(token);
     if (!s) return json({ error: "Sessie verlopen" }, 401);
+    const preferredStores = parseSessionPreferredStores(s);
     return json({
       userId: Number(s.userId),
       displayName: s.displayName,
       householdId: Number(s.householdId),
       householdName: s.householdName,
-      preferredStore: s.preferredStore ?? null,
+      preferredStores,
+      preferredStore: preferredStores[0] ?? null,
     });
   }
 
@@ -148,13 +178,9 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
     "householdId" in session ? session.householdId : session.household_id
   );
   const userId = Number("userId" in session ? session.userId : session.user_id);
-  const preferredStore = (
-    "preferredStore" in session
-      ? session.preferredStore
-      : "preferred_store" in session
-        ? (session as RowDataPacket).preferred_store
-        : mock.mockPreferredStore()
-  ) as StoreId | null;
+  const preferredStores = useDb
+    ? parseSessionPreferredStores(session as RowDataPacket)
+    : mock.mockPreferredStores();
 
   if (method === "GET" && path === "/health/redis") {
     if (!hasRedisUrl()) {
@@ -186,31 +212,46 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
     }
     const quote = await getProductPrices(ean, {
       productName: name,
-      preferredStore,
+      preferredStores,
       forceRefresh: refresh,
     });
     return json(quote);
   }
 
   if (method === "GET" && path === "/settings/preferred-store") {
-    return json({ preferredStore });
+    return json({
+      preferredStores,
+      preferredStore: preferredStores[0] ?? null,
+    });
   }
 
   if (method === "PATCH" && path === "/settings/preferred-store") {
-    const storeRaw = body.store;
-    const store =
-      storeRaw == null || storeRaw === ""
-        ? null
-        : normalizeStoreId(String(storeRaw));
-    if (storeRaw != null && storeRaw !== "" && !store) {
-      return json({ error: "Onbekende winkel" }, 400);
+    let stores: StoreId[];
+    if (Array.isArray(body.stores)) {
+      stores = normalizePreferredStores(body.stores);
+    } else {
+      const storeRaw = body.store;
+      const store =
+        storeRaw == null || storeRaw === ""
+          ? null
+          : normalizeStoreId(String(storeRaw));
+      if (storeRaw != null && storeRaw !== "" && !store) {
+        return json({ error: "Onbekende winkel" }, 400);
+      }
+      stores = store ? [store] : [];
     }
     if (!useDb) {
-      mock.mockSetPreferredStore(store);
-      return json({ preferredStore: store });
+      mock.mockSetPreferredStores(stores);
+      return json({
+        preferredStores: stores,
+        preferredStore: stores[0] ?? null,
+      });
     }
-    await setHouseholdPreferredStore(getPool(), householdId, store);
-    return json({ preferredStore: store });
+    await setHouseholdPreferredStores(getPool(), householdId, stores);
+    return json({
+      preferredStores: stores,
+      preferredStore: stores[0] ?? null,
+    });
   }
 
   const listMatch = path.match(/^\/lists\/(\d+)\/items$/);

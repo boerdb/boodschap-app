@@ -39,7 +39,10 @@ export interface PriceQuote {
   ean: string;
   prices: StorePrice[];
   lowest: StorePrice | null;
+  /** Goedkoopste prijs bij een van je voorkeurswinkels */
   preferred: StorePrice | null;
+  /** Alle prijzen bij je voorkeurswinkels */
+  preferredPrices: StorePrice[];
   cached: boolean;
   sourceNote?: string;
 }
@@ -50,6 +53,8 @@ export interface SessionInfo {
   displayName: string;
   householdId: number;
   householdName: string;
+  preferredStores?: StoreId[];
+  /** @deprecated eerste voorkeur; gebruik preferredStores */
   preferredStore?: StoreId | null;
 }
 

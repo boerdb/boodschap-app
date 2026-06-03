@@ -103,19 +103,27 @@ export async function fetchPriceDatasetMeta(): Promise<{
   return apiFetch("/prices/dataset");
 }
 
-export async function fetchPreferredStore(): Promise<{
+export async function fetchPreferredStores(): Promise<{
+  preferredStores: StoreId[];
   preferredStore: StoreId | null;
 }> {
   return apiFetch("/settings/preferred-store");
 }
 
-export async function setPreferredStore(
-  store: StoreId | null
-): Promise<{ preferredStore: StoreId | null }> {
+export async function setPreferredStores(
+  stores: StoreId[]
+): Promise<{ preferredStores: StoreId[]; preferredStore: StoreId | null }> {
   return apiFetch("/settings/preferred-store", {
     method: "PATCH",
-    body: JSON.stringify({ store }),
+    body: JSON.stringify({ stores }),
   });
+}
+
+/** @deprecated gebruik setPreferredStores */
+export async function setPreferredStore(
+  store: StoreId | null
+): Promise<{ preferredStores: StoreId[]; preferredStore: StoreId | null }> {
+  return setPreferredStores(store ? [store] : []);
 }
 
 export async function lookupOff(barcode: string): Promise<OffProduct | null> {

@@ -8,6 +8,7 @@ export interface StoredSession {
   displayName: string;
   householdId: number;
   householdName: string;
+  preferredStores?: StoreId[];
   preferredStore?: StoreId | null;
 }
 

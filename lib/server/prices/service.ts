@@ -1,5 +1,6 @@
 import type { Pool } from "mysql2/promise";
 import { hasDatabaseUrl, getPool } from "@/lib/db/mysql";
+import { parsePreferredStoresJson } from "@/lib/prices/preferred-stores";
 import { fetchAhPriceByEan } from "./ah";
 import {
   getDatasetMeta,
@@ -31,20 +32,25 @@ function buildQuote(
   ean: string,
   prices: StorePrice[],
   cached: boolean,
-  preferredStore: StoreId | null,
+  preferredStores: StoreId[],
   sourceNote?: string
 ): PriceQuote {
   const labeled = withLabels(prices);
   const lowest = labeled[0] ?? null;
+  const preferredSet = new Set(preferredStores);
+  const preferredPrices = labeled.filter((p) => preferredSet.has(p.store));
   const preferred =
-    preferredStore != null
-      ? labeled.find((p) => p.store === preferredStore) ?? null
+    preferredPrices.length > 0
+      ? preferredPrices.reduce((a, b) =>
+          a.priceCents <= b.priceCents ? a : b
+        )
       : null;
   return {
     ean,
     prices: labeled,
     lowest,
     preferred,
+    preferredPrices,
     cached,
     sourceNote,
   };
@@ -97,13 +103,13 @@ export async function getProductPrices(
   ean: string,
   options: {
     productName?: string;
-    preferredStore?: StoreId | null;
+    preferredStores?: StoreId[];
     forceRefresh?: boolean;
   } = {}
 ): Promise<PriceQuote> {
   const normalized = ean.replace(/\D/g, "");
   if (normalized.length < 8) {
-    return buildQuote(normalized, [], false, options.preferredStore ?? null);
+    return buildQuote(normalized, [], false, options.preferredStores ?? []);
   }
 
   const useDb = hasDatabaseUrl();
@@ -129,7 +135,7 @@ export async function getProductPrices(
       normalized,
       prices,
       false,
-      options.preferredStore ?? null,
+      options.preferredStores ?? [],
       live.sourceNote
     );
   }
@@ -146,7 +152,7 @@ export async function getProductPrices(
     normalized,
     prices,
     cached,
-    options.preferredStore ?? null,
+    options.preferredStores ?? [],
     cached ? "Prijzen uit MariaDB (price_cache)." : undefined
   );
 }
@@ -155,26 +161,33 @@ export async function getPriceDatasetStatus() {
   return getDatasetMeta();
 }
 
-export async function getHouseholdPreferredStore(
+export async function getHouseholdPreferredStores(
   pool: Pool,
   householdId: number
-): Promise<StoreId | null> {
+): Promise<StoreId[]> {
   const [rows] = (await pool.execute(
-    "SELECT preferred_store FROM households WHERE id = ?",
+    "SELECT preferred_stores, preferred_store FROM households WHERE id = ?",
     [householdId]
-  )) as [{ preferred_store: string | null }[], unknown];
-  const raw = rows[0]?.preferred_store;
-  if (!raw) return null;
-  return raw as StoreId;
+  )) as [
+    { preferred_stores: string | Buffer | null; preferred_store: string | null }[],
+    unknown,
+  ];
+  const row = rows[0];
+  return parsePreferredStoresJson(
+    row?.preferred_stores,
+    row?.preferred_store
+  );
 }
 
-export async function setHouseholdPreferredStore(
+export async function setHouseholdPreferredStores(
   pool: Pool,
   householdId: number,
-  store: StoreId | null
+  stores: StoreId[]
 ): Promise<void> {
-  await pool.execute("UPDATE households SET preferred_store = ? WHERE id = ?", [
-    store,
-    householdId,
-  ]);
+  const json = JSON.stringify(stores);
+  const legacy = stores[0] ?? null;
+  await pool.execute(
+    "UPDATE households SET preferred_stores = ?, preferred_store = ? WHERE id = ?",
+    [json, legacy, householdId]
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { StoreId } from "@/lib/api/types";
 import {
   getCachedPriceQuote,
   isPriceQuoteFresh,
@@ -13,12 +14,30 @@ function formatEuro(cents: number): string {
   }).format(cents / 100);
 }
 
+function pickDisplayPrice(
+  prices: { store: string; storeLabel: string; priceCents: number }[],
+  lowest: { storeLabel: string; priceCents: number } | null,
+  preferredStores: StoreId[]
+) {
+  const preferredSet = new Set(preferredStores);
+  const fromPreferred = prices.filter((p) =>
+    preferredSet.has(p.store as StoreId)
+  );
+  if (fromPreferred.length) {
+    const best = fromPreferred.reduce((a, b) =>
+      a.priceCents <= b.priceCents ? a : b
+    );
+    return best;
+  }
+  return lowest;
+}
+
 export function OfflinePriceHint({
   barcode,
-  preferredStore,
+  preferredStores = [],
 }: {
   barcode: string;
-  preferredStore?: string | null;
+  preferredStores?: StoreId[];
 }) {
   const [hint, setHint] = useState<string | null>(null);
 
@@ -27,11 +46,11 @@ export function OfflinePriceHint({
     void (async () => {
       const quote = await getCachedPriceQuote(barcode);
       if (cancelled || !quote || !isPriceQuoteFresh(quote)) return;
-      const pick =
-        (preferredStore
-          ? quote.prices.find((p) => p.store === preferredStore)
-          : null) ??
-        quote.lowest;
+      const pick = pickDisplayPrice(
+        quote.prices,
+        quote.lowest,
+        preferredStores
+      );
       if (pick) {
         setHint(`${formatEuro(pick.priceCents)} · ${pick.storeLabel}`);
       }
@@ -39,7 +58,7 @@ export function OfflinePriceHint({
     return () => {
       cancelled = true;
     };
-  }, [barcode, preferredStore]);
+  }, [barcode, preferredStores]);
 
   if (!hint) return null;
   return <div className="list-item-meta">{hint} (offline)</div>;

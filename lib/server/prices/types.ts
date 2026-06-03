@@ -30,6 +30,7 @@ export interface PriceQuote {
   prices: StorePrice[];
   lowest: StorePrice | null;
   preferred: StorePrice | null;
+  preferredPrices: StorePrice[];
   cached: boolean;
   sourceNote?: string;
 }

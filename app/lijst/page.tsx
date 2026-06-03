@@ -7,10 +7,10 @@ import {
   deleteListItem,
   fetchListItems,
   patchListItem,
-  setPreferredStore,
+  setPreferredStores,
 } from "@/lib/api/client";
 import type { ListItem, StoreId } from "@/lib/api/types";
-import { STORE_OPTIONS } from "@/lib/prices/store-options";
+import { PreferredStorePicker } from "@/components/prices/PreferredStorePicker";
 import { OfflinePriceHint } from "@/components/prices/OfflinePriceHint";
 import {
   clearSession,
@@ -34,9 +34,7 @@ export default function LijstPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [manualName, setManualName] = useState("");
-  const [preferredStore, setPreferredStoreState] = useState<StoreId | null>(
-    null
-  );
+  const [preferredStores, setPreferredStoresState] = useState<StoreId[]>([]);
   const lastSyncRef = useRef(0);
   const householdId = session?.householdId;
   const token = session?.token;
@@ -48,7 +46,13 @@ export default function LijstPage() {
       return;
     }
     setSession(s);
-    setPreferredStoreState(s?.preferredStore ?? null);
+    setPreferredStoresState(
+      s?.preferredStores?.length
+        ? s.preferredStores
+        : s?.preferredStore
+          ? [s.preferredStore]
+          : []
+    );
   }, [router]);
 
   const load = useCallback(
@@ -238,31 +242,23 @@ export default function LijstPage() {
       <p className="household-badge">
         {session.householdName} · {session.displayName}
       </p>
-      <label className="price-store-pick lijst-store-pick">
-        <span>Voorkeurswinkel</span>
-        <select
-          className="input"
-          value={preferredStore ?? ""}
-          onChange={(e) => {
-            const store = e.target.value
-              ? (e.target.value as StoreId)
-              : null;
-            setPreferredStoreState(store);
-            void setPreferredStore(store).then(() => {
+      <div className="lijst-store-pick">
+        <PreferredStorePicker
+          value={preferredStores}
+          onChange={(stores) => {
+            setPreferredStoresState(stores);
+            void setPreferredStores(stores).then(() => {
               if (session) {
-                setSession({ ...session, preferredStore: store });
+                setSession({
+                  ...session,
+                  preferredStores: stores,
+                  preferredStore: stores[0] ?? null,
+                });
               }
             });
           }}
-        >
-          <option value="">Geen voorkeur</option>
-          {STORE_OPTIONS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </label>
+        />
+      </div>
       <p className="household-badge">
         <button
           type="button"
@@ -322,7 +318,7 @@ export default function LijstPage() {
                     <div className="list-item-meta">EAN {item.barcode}</div>
                     <OfflinePriceHint
                       barcode={item.barcode}
-                      preferredStore={preferredStore}
+                      preferredStores={preferredStores}
                     />
                   </>
                 )}
