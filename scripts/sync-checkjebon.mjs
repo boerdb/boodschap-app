@@ -18,15 +18,25 @@ const SOURCE =
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+function readEnvLocal() {
+  try {
+    return readFileSync(join(root, ".env.local"), "utf8");
+  } catch {
+    return "";
+  }
+}
+
 function resolveDatabaseUrl() {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  try {
-    const env = readFileSync(join(root, ".env.local"), "utf8");
-    const m = env.match(/^DATABASE_URL=(.+)$/m);
-    if (m) return m[1].trim();
-  } catch {
-    /* ignore */
-  }
+  const m = readEnvLocal().match(/^DATABASE_URL=(.+)$/m);
+  if (m) return m[1].trim();
+  return null;
+}
+
+function resolveRedisUrl() {
+  if (process.env.REDIS_URL?.trim()) return process.env.REDIS_URL.trim();
+  const m = readEnvLocal().match(/^REDIS_URL=(.+)$/m);
+  if (m) return m[1].trim().replace(/^["']|["']$/g, "");
   return null;
 }
 
@@ -71,7 +81,7 @@ async function main() {
   await pool.end();
   console.log("Opgeslagen in MariaDB: boodschap.checkjebon_dataset");
 
-  const redisUrl = process.env.REDIS_URL?.trim();
+  const redisUrl = resolveRedisUrl();
   if (redisUrl) {
     const redis = createClient({ url: redisUrl });
     await redis.connect();
