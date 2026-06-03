@@ -25,7 +25,11 @@ def run(ssh: paramiko.SSHClient, cmd: str, check: bool = True, timeout: int = 90
     err = stderr.read().decode("utf-8", errors="replace")
     code = stdout.channel.recv_exit_status()
     if out.strip():
-        print(out.rstrip())
+        safe = out.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(
+            sys.stdout.encoding or "utf-8",
+            errors="replace",
+        )
+        print(safe.rstrip())
     if err.strip() and code != 0:
         print(err.rstrip(), file=sys.stderr)
     if check and code != 0:
