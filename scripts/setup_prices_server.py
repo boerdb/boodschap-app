@@ -57,7 +57,6 @@ def main() -> int:
         sftp.close()
         run(
             ssh_db,
-            f"mysql -u boodschap -p'{DB_APP_PASSWORD}' boodschap < {remote_tmp} 2>&1 || "
             f"mysql boodschap < {remote_tmp} 2>&1",
             timeout=120,
         )
@@ -65,6 +64,8 @@ def main() -> int:
 
     ssh_db.close()
 
+    run(ssh_next, f"cd {REMOTE_DIR} && npm ci", timeout=300)
+    run(ssh_next, f"cd {REMOTE_DIR} && npm run build", timeout=600)
     safe_print("Eerste sync:prices (kan 1–2 minuten duren)…")
     code = run(
         ssh_next,

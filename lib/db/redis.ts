@@ -14,6 +14,18 @@ export function hasRedisUrl(): boolean {
   return Boolean(process.env.REDIS_URL?.trim());
 }
 
+/** Zelfde patroon als news-app (`lib/redis.ts`). */
+export async function redisPing(): Promise<boolean> {
+  if (!hasRedisUrl()) return false;
+  try {
+    const redis = await getRedis();
+    if (!redis) return false;
+    return (await redis.ping()) === "PONG";
+  } catch {
+    return false;
+  }
+}
+
 export async function getRedis(): Promise<RedisClientType | null> {
   const url = process.env.REDIS_URL?.trim();
   if (!url) return null;

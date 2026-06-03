@@ -3,6 +3,7 @@ import type { ListItem } from "@/lib/api/types";
 import { getPool, hasDatabaseUrl } from "@/lib/db/mysql";
 import { normalizeStoreId } from "@/lib/server/prices/stores";
 import type { StoreId } from "@/lib/server/prices/types";
+import { hasRedisUrl, redisPing } from "@/lib/db/redis";
 import {
   getHouseholdPreferredStore,
   getPriceDatasetStatus,
@@ -154,6 +155,22 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
         ? (session as RowDataPacket).preferred_store
         : mock.mockPreferredStore()
   ) as StoreId | null;
+
+  if (method === "GET" && path === "/health/redis") {
+    if (!hasRedisUrl()) {
+      return json({
+        configured: false,
+        ok: true,
+        message: "REDIS_URL niet gezet; prijzen via MariaDB of bestand",
+      });
+    }
+    const ok = await redisPing();
+    return json({
+      configured: true,
+      ok,
+      message: ok ? "Redis bereikbaar" : "Redis niet bereikbaar",
+    });
+  }
 
   if (method === "GET" && path === "/prices/dataset") {
     const meta = await getPriceDatasetStatus();

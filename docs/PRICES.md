@@ -3,7 +3,7 @@
 Geen Apify, geen externe prijs-API’s. Alleen jouw servers:
 
 - **MariaDB** `192.168.1.14` — blijvende opslag (~10 MB dataset + `price_cache`)
-- **Redis** `192.168.1.14` — snelle geheugencache (zelfde machine, standaard poort **6379**)
+- **Redis** `192.168.1.14` — snelle geheugencache (zelfde instance als **news-app**, standaard poort **6379**; keys `boodschap:*` vs `news-app:*`)
 - **Next.js** `192.168.1.32` — API; leest Redis → anders MariaDB
 - **Telefoon** — IndexedDB alleen voor offline kopie
 

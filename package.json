@@ -9,7 +9,8 @@
     "lint": "eslint",
     "icons": "node scripts/generate-icons.mjs",
     "sync:prices": "node scripts/sync-checkjebon.mjs",
-    "sync:ah-eans": "node scripts/sync-ah-eans.mjs"
+    "sync:ah-eans": "node scripts/sync-ah-eans.mjs",
+    "test:redis": "node scripts/test-redis.mjs"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.0",
