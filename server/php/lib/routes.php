@@ -65,11 +65,19 @@ if ($method === 'POST' && $path === '/auth/login') {
     if (!$household) {
         json_out(['error' => 'Onbekende huishoudcode'], 404);
     }
-    $pdo->prepare('INSERT INTO users (display_name) VALUES (?)')->execute([$name]);
-    $userId = (int) $pdo->lastInsertId();
-    $pdo->prepare(
-        'INSERT IGNORE INTO household_members (household_id, user_id, role) VALUES (?, ?, ?)'
-    )->execute([(int) $household['id'], $userId, 'member']);
+    $stmt = $pdo->prepare(
+        'SELECT u.id, u.display_name FROM users u
+         INNER JOIN household_members hm ON hm.user_id = u.id
+         WHERE hm.household_id = ? AND u.display_name = ?
+         LIMIT 1'
+    );
+    $stmt->execute([(int) $household['id'], $name]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        json_out(['error' => 'Onbekende gebruiker voor dit huishouden'], 403);
+    }
+    $userId = (int) $user['id'];
+    $name = $user['display_name'];
     $token = bin2hex(random_bytes(32));
     $pdo->prepare(
         'INSERT INTO sessions (token, user_id, household_id, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 90 DAY))'

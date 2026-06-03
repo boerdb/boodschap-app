@@ -6,10 +6,12 @@ import { login } from "@/lib/api/client";
 import { clearOfflineData } from "@/lib/offline/queue";
 import { getSession, setSession } from "@/lib/auth/session";
 
+const HOUSEHOLD_CODE = "THUIS";
+const MEMBERS = ["Ben", "Ineke"] as const;
+
 export default function LoginPage() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
-  const [inviteCode, setInviteCode] = useState("THUIS");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,12 +21,11 @@ export default function LoginPage() {
     else if (existing?.displayName) setDisplayName(existing.displayName);
   }, [router]);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function doLogin(name: string) {
     setError(null);
     setLoading(true);
     try {
-      const session = await login(displayName.trim(), inviteCode.trim());
+      const session = await login(name.trim(), HOUSEHOLD_CODE);
       await clearOfflineData();
       setSession({
         token: session.token,
@@ -41,48 +42,55 @@ export default function LoginPage() {
     }
   }
 
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    await doLogin(displayName);
+  }
+
   return (
     <div>
-      <h2 style={{ marginBottom: "0.5rem" }}>Inloggen</h2>
+      <h2 className="login-title">Inloggen</h2>
       <p className="household-badge">
-        Voer je naam en de huishoudcode in om de gedeelde lijst te openen.
+        Kies wie je bent om de gedeelde lijst van {HOUSEHOLD_CODE} te openen.
       </p>
+
+      <div className="login-members">
+        {MEMBERS.map((name) => (
+          <button
+            key={name}
+            type="button"
+            className="btn btn-primary login-member-btn"
+            disabled={loading}
+            onClick={() => void doLogin(name)}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+
       <form className="login-form" onSubmit={onSubmit}>
         <div>
           <label className="label" htmlFor="name">
-            Jouw naam
+            Of typ je naam
           </label>
           <input
             id="name"
             className="input"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Bijv. Ben"
-            required
+            placeholder="Ben of Ineke"
             autoComplete="name"
           />
         </div>
-        <div>
-          <label className="label" htmlFor="code">
-            Huishoudcode
-          </label>
-          <input
-            id="code"
-            className="input"
-            value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-            placeholder="THUIS"
-            required
-          />
-        </div>
         {error && <p className="scanner-error">{error}</p>}
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          className="btn btn-secondary"
+          disabled={loading || !displayName.trim()}
+        >
           {loading ? "Bezig…" : "Naar de lijst"}
         </button>
       </form>
-      <p className="household-badge" style={{ textAlign: "center" }}>
-        Standaard code voor demo: <strong>THUIS</strong>
-      </p>
     </div>
   );
 }

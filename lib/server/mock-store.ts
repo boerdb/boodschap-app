@@ -8,11 +8,16 @@ export interface MockSession {
   householdName: string;
 }
 
+interface MockUser {
+  id: number;
+  displayName: string;
+}
+
 interface MockState {
   householdId: number;
   householdName: string;
   inviteCode: string;
-  nextUserId: number;
+  users: MockUser[];
   nextItemId: number;
   sessions: Map<string, MockSession>;
   items: ListItem[];
@@ -28,7 +33,10 @@ function getState(): MockState {
       householdId: 1,
       householdName: "Thuis",
       inviteCode: "THUIS",
-      nextUserId: 1,
+      users: [
+        { id: 1, displayName: "Ben" },
+        { id: 2, displayName: "Ineke" },
+      ],
       nextItemId: 1,
       sessions: new Map(),
       items: [],
@@ -43,12 +51,15 @@ export function mockLogin(
 ): MockSession | null {
   const state = getState();
   if (inviteCode.toUpperCase() !== state.inviteCode) return null;
+  const user = state.users.find(
+    (u) => u.displayName.toLowerCase() === displayName.trim().toLowerCase()
+  );
+  if (!user) return null;
   const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-  const userId = state.nextUserId++;
   const session: MockSession = {
     token,
-    userId,
-    displayName,
+    userId: user.id,
+    displayName: user.displayName,
     householdId: state.householdId,
     householdName: state.householdName,
   };

@@ -78,15 +78,22 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
       [inviteCode]
     );
     if (!hh[0]) return json({ error: "Onbekende huishoudcode" }, 404);
-    const [ins] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO users (display_name) VALUES (?)",
-      [displayName]
+    const [users] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.id, u.display_name AS displayName
+       FROM users u
+       INNER JOIN household_members hm ON hm.user_id = u.id
+       WHERE hm.household_id = ? AND LOWER(u.display_name) = LOWER(?)
+       LIMIT 1`,
+      [hh[0].id, displayName]
     );
-    const userId = ins.insertId;
-    await pool.execute(
-      "INSERT IGNORE INTO household_members (household_id, user_id, role) VALUES (?, ?, 'member')",
-      [hh[0].id, userId]
-    );
+    if (!users[0]) {
+      return json(
+        { error: "Onbekende gebruiker voor dit huishouden" },
+        403
+      );
+    }
+    const userId = Number(users[0].id);
+    const resolvedName = String(users[0].displayName);
     const sessionToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     await pool.execute(
       `INSERT INTO sessions (token, user_id, household_id, expires_at)
@@ -96,7 +103,7 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
     return json({
       token: sessionToken,
       userId,
-      displayName,
+      displayName: resolvedName,
       householdId: Number(hh[0].id),
       householdName: hh[0].name,
     });
