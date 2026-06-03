@@ -279,3 +279,98 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* PWA banners */
+.banner-stack {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(8px, env(safe-area-inset-right, 0px));
+  position: relative;
+  z-index: 50;
+}
+
+.platform-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 42px 10px 12px;
+  border-radius: 10px;
+  position: relative;
+}
+
+.banner-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.85;
+}
+
+.banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-copy strong {
+  font-size: 0.9rem;
+}
+
+.banner-copy span {
+  font-size: 0.82rem;
+  opacity: 0.95;
+}
+
+.banner-actions button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.banner-btn-icon {
+  vertical-align: middle;
+}
+
+.android-banner {
+  background: #1b4332;
+  border: 1px solid #2d6a4f;
+  color: #d8f3dc;
+}
+
+.ios-banner {
+  background: #1a2e1a;
+  border: 1px solid #40916c;
+  color: #e8f5e9;
+}
+
+.update-banner {
+  background: #3d3500;
+  border: 1px solid #6b5c00;
+  color: #fff3bf;
+}
+
+.update-banner .banner-actions button {
+  background: #f4d35e;
+  color: #1a1a1a;
+}

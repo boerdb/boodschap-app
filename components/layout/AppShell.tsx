@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, ScanBarcode } from "lucide-react";
+import { BannerStack } from "./BannerStack";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
+      <BannerStack />
       <header className="app-header">
         <h1 className="app-header-title">Boodschappen</h1>
         <ThemeToggle />

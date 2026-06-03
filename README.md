@@ -40,6 +40,8 @@ Zie [docs/DEPLOY.md](docs/DEPLOY.md) en [`.env.example`](.env.example).
 - Gedeelde lijst (polling)
 - Licht/donker thema
 - Offline wachtrij + Serwist (productie)
+- Installatiebanner (Android + iOS) en update-popup
+- App-iconen: `npm run icons` (bron: `assets/boodschap-icon-source.svg`)
 
 ## Scripts
 
