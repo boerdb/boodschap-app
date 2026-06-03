@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import type { PriceQuote, StoreId } from "@/lib/api/types";
-import { PreferredStorePicker } from "@/components/prices/PreferredStorePicker";
+import { formatPreferredStoreSummary } from "@/lib/prices/preferred-stores";
 
 function formatEuro(cents: number): string {
   return new Intl.NumberFormat("nl-NL", {
@@ -15,7 +16,8 @@ interface PriceComparisonProps {
   loading?: boolean;
   error?: string | null;
   preferredStores: StoreId[];
-  onPreferredStoresChange?: (stores: StoreId[]) => void;
+  /** Link naar lijst om voorkeur te wijzigen (geen dubbele picker bij scan) */
+  storesEditHref?: string;
   compact?: boolean;
 }
 
@@ -24,7 +26,7 @@ export function PriceComparison({
   loading,
   error,
   preferredStores,
-  onPreferredStoresChange,
+  storesEditHref,
   compact = false,
 }: PriceComparisonProps) {
   if (loading) {
@@ -68,12 +70,12 @@ export function PriceComparison({
         )}
       </div>
 
-      {onPreferredStoresChange && (
-        <PreferredStorePicker
-          value={preferredStores}
-          onChange={onPreferredStoresChange}
-          compact={compact}
-        />
+      {storesEditHref && (
+        <p className="price-stores-edit">
+          {formatPreferredStoreSummary(preferredStores)}
+          {" · "}
+          <Link href={storesEditHref}>Wijzig op lijst</Link>
+        </p>
       )}
 
       <ul className="price-store-list">

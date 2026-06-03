@@ -10,7 +10,7 @@ import {
   setPreferredStores,
 } from "@/lib/api/client";
 import type { ListItem, StoreId } from "@/lib/api/types";
-import { PreferredStorePicker } from "@/components/prices/PreferredStorePicker";
+import { PreferredStoresSection } from "@/components/prices/PreferredStoresSection";
 import { OfflinePriceHint } from "@/components/prices/OfflinePriceHint";
 import {
   clearSession,
@@ -243,7 +243,7 @@ export default function LijstPage() {
         {session.householdName} · {session.displayName}
       </p>
       <div className="lijst-store-pick">
-        <PreferredStorePicker
+        <PreferredStoresSection
           value={preferredStores}
           onChange={(stores) => {
             setPreferredStoresState(stores);

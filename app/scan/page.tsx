@@ -9,7 +9,6 @@ import {
   addListItem,
   fetchProductPrices,
   lookupOff,
-  setPreferredStores,
 } from "@/lib/api/client";
 import type { PriceQuote, StoreId } from "@/lib/api/types";
 import { PriceComparison } from "@/components/prices/PriceComparison";
@@ -176,21 +175,7 @@ export default function ScanPage() {
             loading={priceLoading}
             error={priceError}
             preferredStores={preferredStores}
-            onPreferredStoresChange={(stores) => {
-              setPreferredStoresState(stores);
-              void setPreferredStores(stores)
-                .then(() => {
-                  const s = getSession();
-                  if (s) {
-                    setSession({
-                      ...s,
-                      preferredStores: stores,
-                      preferredStore: stores[0] ?? null,
-                    });
-                  }
-                })
-                .catch(() => {});
-            }}
+            storesEditHref="/lijst"
           />
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
             <button

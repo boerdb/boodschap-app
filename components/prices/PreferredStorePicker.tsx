@@ -28,12 +28,18 @@ export function PreferredStorePicker({
     onChange([...value, id]);
   }
 
+  const showHeader = Boolean(label);
+
   return (
     <div className={`preferred-store-pick ${compact ? "preferred-store-pick-compact" : ""}`}>
-      <span className="preferred-store-pick-label">{label}</span>
-      <p className="preferred-store-pick-hint">
-        Kies tot {MAX_PREFERRED_STORES} winkels — prijzen daar worden gemarkeerd.
-      </p>
+      {showHeader && (
+        <>
+          <span className="preferred-store-pick-label">{label}</span>
+          <p className="preferred-store-pick-hint">
+            Kies tot {MAX_PREFERRED_STORES} winkels — prijzen daar worden gemarkeerd.
+          </p>
+        </>
+      )}
       <div className="preferred-store-chips" role="group" aria-label={label}>
         {STORE_OPTIONS.map((o) => {
           const on = value.includes(o.id);

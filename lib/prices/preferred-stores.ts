@@ -43,6 +43,15 @@ export function parsePreferredStoresJson(
   return [];
 }
 
+const LABEL_BY_ID = Object.fromEntries(
+  STORE_OPTIONS.map((o) => [o.id, o.label])
+) as Record<StoreId, string>;
+
+export function formatPreferredStoreSummary(stores: StoreId[]): string {
+  if (!stores.length) return "Geen gekozen — tik om in te stellen";
+  return stores.map((id) => LABEL_BY_ID[id] ?? id).join(" · ");
+}
+
 export function togglePreferredStore(
   current: StoreId[],
   store: StoreId
