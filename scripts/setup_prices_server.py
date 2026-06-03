@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Migraties, REDIS_URL, eerste sync:prices en cron op .32 / MariaDB .14."""
+import os
 import sys
 import paramiko
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 NEXT_HOST, NEXT_USER, PASSWORD = "192.168.1.32", "root", "kerkpoort"
 DB_HOST, DB_USER = "192.168.1.14", "root"
@@ -47,7 +50,7 @@ def main() -> int:
     ssh_db.connect(DB_HOST, username=DB_USER, password=PASSWORD, timeout=30)
 
     for mig in ["002_prices.sql", "003_checkjebon_dataset.sql"]:
-        local = f"sql/migrations/{mig}"
+        local = os.path.join(ROOT, "sql", "migrations", mig)
         remote_tmp = f"/tmp/boodschap_{mig}"
         sftp = ssh_db.open_sftp()
         sftp.put(local, remote_tmp)
