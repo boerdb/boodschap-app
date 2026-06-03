@@ -63,7 +63,7 @@ git push origin main
 python scripts/deploy_pull.py
 ```
 
-App draait op **poort 3008** via PM2 (`boodschap-app`) in `/var/www/boodschap-app`.
+App draait op **poort 3009** via PM2 (`boodschap-app`) in `/var/www/boodschap-app` (3008 is bezet door print-adres-app).
 
 ## Optioneel: PHP-API op 192.168.1.52
 

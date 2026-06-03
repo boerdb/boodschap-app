@@ -14,7 +14,7 @@ GIT_REPO = os.environ.get(
     "GIT_REPO", "git@github.com:boerdb/boodschap-app.git"
 )
 GIT_BRANCH = os.environ.get("GIT_BRANCH", "main")
-PORT = os.environ.get("APP_PORT", "3008")
+PORT = os.environ.get("APP_PORT", "3009")
 DB_APP_PASSWORD = os.environ.get("DB_APP_PASSWORD", "kerkpoort")
 
 

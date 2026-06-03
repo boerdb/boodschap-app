@@ -1,4 +1,4 @@
-/** PM2 — Boodschappenlijst PWA op poort 3008 */
+/** PM2 — Boodschappenlijst PWA op poort 3009 (3008 = print-adres-app) */
 module.exports = {
   apps: [
     {
@@ -8,7 +8,7 @@ module.exports = {
       args: "start",
       env: {
         NODE_ENV: "production",
-        PORT: 3008,
+        PORT: 3009,
         TZ: "Europe/Amsterdam",
         APP_TIMEZONE: "Europe/Amsterdam",
       },
