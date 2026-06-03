@@ -1,13 +1,3 @@
-export interface ListItem {
-  id: number;
-  barcode: string | null;
-  name: string;
-  quantity: number;
-  checked: boolean;
-  addedBy: number | null;
-  updatedAt: number;
-}
-
 export type StoreId =
   | "ah"
   | "jumbo"
@@ -42,20 +32,4 @@ export interface PriceQuote {
   preferred: StorePrice | null;
   cached: boolean;
   sourceNote?: string;
-}
-
-export interface SessionInfo {
-  token: string;
-  userId: number;
-  displayName: string;
-  householdId: number;
-  householdName: string;
-  preferredStore?: StoreId | null;
-}
-
-export interface OffProduct {
-  name: string;
-  brand?: string;
-  imageUrl?: string;
-  barcode: string;
 }

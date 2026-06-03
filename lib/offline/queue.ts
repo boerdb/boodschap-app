@@ -23,6 +23,8 @@ export async function getCachedListItems(): Promise<ListItem[]> {
 export async function clearOfflineData(): Promise<void> {
   await set(QUEUE_KEY, []);
   await set(CACHE_KEY, []);
+  const { clearPriceCache } = await import("@/lib/offline/prices");
+  await clearPriceCache();
 }
 
 export async function enqueueAction(

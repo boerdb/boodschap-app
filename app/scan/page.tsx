@@ -5,15 +5,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
-import { addListItem, lookupOff } from "@/lib/api/client";
-import { getSession } from "@/lib/auth/session";
+import {
+  addListItem,
+  fetchProductPrices,
+  lookupOff,
+  setPreferredStore,
+} from "@/lib/api/client";
+import type { PriceQuote, StoreId } from "@/lib/api/types";
+import { PriceComparison } from "@/components/prices/PriceComparison";
+import { getSession, setSession } from "@/lib/auth/session";
 import { enqueueAction } from "@/lib/offline/queue";
 
 export default function ScanPage() {
   const router = useRouter();
   const [session, setSessionState] = useState<ReturnType<typeof getSession>>(null);
   useEffect(() => {
-    setSessionState(getSession());
+    const s = getSession();
+    setSessionState(s);
+    setPreferredStoreState(s?.preferredStore ?? null);
   }, []);
   const [status, setStatus] = useState<string | null>(null);
   const [preview, setPreview] = useState<{
@@ -24,6 +33,12 @@ export default function ScanPage() {
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [priceQuote, setPriceQuote] = useState<PriceQuote | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [preferredStore, setPreferredStoreState] = useState<StoreId | null>(
+    null
+  );
 
   useEffect(() => {
     if (!getSession()?.token) router.replace("/login");
@@ -38,16 +53,54 @@ export default function ScanPage() {
       setStatus("Product opzoeken…");
       try {
         const product = await lookupOff(barcode);
-        if (product) {
-          setPreview(product);
-          setStatus(null);
-        } else {
-          setPreview({ barcode, name: `Product ${barcode}` });
+        const p = product ?? { barcode, name: `Product ${barcode}` };
+        setPreview(p);
+        if (!product) {
           setStatus("Niet in Open Food Facts — pas de naam aan op de lijst.");
+        } else {
+          setStatus(null);
+        }
+        setPriceQuote(null);
+        setPriceError(null);
+        setPriceLoading(true);
+        try {
+          const {
+            getCachedPriceQuote,
+            isPriceQuoteFresh,
+          } = await import("@/lib/offline/prices");
+
+          if (!navigator.onLine) {
+            const cached = await getCachedPriceQuote(barcode);
+            if (cached && isPriceQuoteFresh(cached)) {
+              setPriceQuote(cached);
+            } else {
+              setPriceError(
+                "Offline — geen opgeslagen prijzen. Eerder online scannen of wachten op Wi‑Fi."
+              );
+            }
+          } else {
+            try {
+              const quote = await fetchProductPrices(barcode, { name: p.name });
+              setPriceQuote(quote);
+            } catch (err) {
+              const cached = await getCachedPriceQuote(barcode);
+              if (cached && isPriceQuoteFresh(cached)) {
+                setPriceQuote(cached);
+                setPriceError("Live prijzen niet bereikbaar — toont opgeslagen prijzen.");
+              } else {
+                setPriceError(
+                  err instanceof Error ? err.message : "Prijzen laden mislukt"
+                );
+              }
+            }
+          }
+        } finally {
+          setPriceLoading(false);
         }
       } catch {
         setPreview({ barcode, name: `Product ${barcode}` });
         setStatus("OFF niet bereikbaar — standaardnaam gebruikt.");
+        setPriceLoading(false);
       } finally {
         setBusy(false);
       }
@@ -114,6 +167,21 @@ export default function ScanPage() {
             <p className="household-badge">{preview.brand}</p>
           )}
           <p className="household-badge">EAN {preview.barcode}</p>
+          <PriceComparison
+            quote={priceQuote}
+            loading={priceLoading}
+            error={priceError}
+            preferredStore={preferredStore}
+            onPreferredStoreChange={(store) => {
+              setPreferredStoreState(store);
+              void setPreferredStore(store)
+                .then(() => {
+                  const s = getSession();
+                  if (s) setSession({ ...s, preferredStore: store });
+                })
+                .catch(() => {});
+            }}
+          />
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
             <button
               type="button"
@@ -130,6 +198,8 @@ export default function ScanPage() {
                 setPreview(null);
                 setPaused(false);
                 setStatus(null);
+                setPriceQuote(null);
+                setPriceError(null);
               }}
             >
               Opnieuw scannen

@@ -7,7 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "sync:prices": "node scripts/sync-checkjebon.mjs",
+    "sync:ah-eans": "node scripts/sync-ah-eans.mjs"
   },
   "dependencies": {
     "@zxing/browser": "^0.2.0",
@@ -17,6 +19,7 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "redis": "^6.0.0",
     "serwist": "^9.5.11"
   },
   "devDependencies": {

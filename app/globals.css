@@ -374,3 +374,98 @@ body {
   background: #f4d35e;
   color: #1a1a1a;
 }
+
+/* Prijsvergelijking */
+.price-panel {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-bg);
+}
+
+.price-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-lowest {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.price-preferred {
+  font-size: 0.82rem;
+  color: var(--shell-text-muted);
+}
+
+.price-store-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--shell-text-muted);
+}
+
+.lijst-store-pick {
+  margin-bottom: 0.75rem;
+}
+
+.price-store-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.price-store-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--shell-border);
+  font-size: 0.88rem;
+}
+
+.price-store-row:last-child {
+  border-bottom: none;
+}
+
+.price-store-row.is-lowest .price-store-amount {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.price-store-row.is-preferred .price-store-name::after {
+  content: " ★";
+  color: var(--accent);
+}
+
+.price-store-unit {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: var(--shell-text-muted);
+}
+
+.price-old {
+  text-decoration: line-through;
+  opacity: 0.65;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.price-panel-meta,
+.price-panel-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--shell-text-muted);
+}
+
+.price-panel-error {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--danger);
+}

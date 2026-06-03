@@ -1,4 +1,10 @@
-import type { ListItem, OffProduct, SessionInfo } from "./types";
+import type {
+  ListItem,
+  OffProduct,
+  PriceQuote,
+  SessionInfo,
+  StoreId,
+} from "./types";
 import { getAuthHeaders } from "@/lib/auth/session";
 
 const API_BASE = "/api/boodschap";
@@ -69,6 +75,47 @@ export async function patchListItem(
 
 export async function deleteListItem(itemId: number): Promise<void> {
   await apiFetch(`/items/${itemId}`, { method: "DELETE" });
+}
+
+export async function fetchProductPrices(
+  ean: string,
+  options?: { name?: string; refresh?: boolean }
+): Promise<PriceQuote> {
+  const params = new URLSearchParams({ ean });
+  if (options?.name) params.set("name", options.name);
+  if (options?.refresh) params.set("refresh", "1");
+  const quote = await apiFetch<PriceQuote>(`/prices?${params}`);
+  if (typeof window !== "undefined" && navigator.onLine) {
+    const { cachePriceQuote } = await import("@/lib/offline/prices");
+    await cachePriceQuote(ean, quote);
+  }
+  return quote;
+}
+
+export async function fetchPriceDatasetMeta(): Promise<{
+  storage: "redis" | "mariadb" | "file" | "none";
+  location: string;
+  exists: boolean;
+  updatedAt: number | null;
+  sizeBytes: number | null;
+  storeCount: number | null;
+}> {
+  return apiFetch("/prices/dataset");
+}
+
+export async function fetchPreferredStore(): Promise<{
+  preferredStore: StoreId | null;
+}> {
+  return apiFetch("/settings/preferred-store");
+}
+
+export async function setPreferredStore(
+  store: StoreId | null
+): Promise<{ preferredStore: StoreId | null }> {
+  return apiFetch("/settings/preferred-store", {
+    method: "PATCH",
+    body: JSON.stringify({ store }),
+  });
 }
 
 export async function lookupOff(barcode: string): Promise<OffProduct | null> {

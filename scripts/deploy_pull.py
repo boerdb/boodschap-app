@@ -39,6 +39,7 @@ def run(ssh: paramiko.SSHClient, cmd: str, check: bool = True, timeout: int = 90
 
 def main() -> int:
     env_content = f"""DATABASE_URL=mysql://boodschap:{DB_APP_PASSWORD}@{DB_HOST}:3306/boodschap
+REDIS_URL=redis://{DB_HOST}:6379
 NODE_ENV=production
 APP_TIMEZONE=Europe/Amsterdam
 PORT={PORT}

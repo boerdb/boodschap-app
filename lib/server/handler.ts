@@ -1,6 +1,14 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import type { ListItem } from "@/lib/api/types";
 import { getPool, hasDatabaseUrl } from "@/lib/db/mysql";
+import { normalizeStoreId } from "@/lib/server/prices/stores";
+import type { StoreId } from "@/lib/server/prices/types";
+import {
+  getHouseholdPreferredStore,
+  getPriceDatasetStatus,
+  getProductPrices,
+  setHouseholdPreferredStore,
+} from "@/lib/server/prices/service";
 import * as mock from "./mock-store";
 
 export interface ApiContext {
@@ -27,7 +35,8 @@ async function dbSession(token: string) {
   const pool = getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT s.user_id AS userId, s.household_id AS householdId,
-            u.display_name AS displayName, h.name AS householdName
+            u.display_name AS displayName, h.name AS householdName,
+            h.preferred_store AS preferredStore
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      JOIN households h ON h.id = s.household_id
@@ -115,7 +124,7 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
       const s = mock.mockSession(token);
       if (!s) return json({ error: "Sessie verlopen" }, 401);
       const { token: _t, ...rest } = s;
-      return json(rest);
+      return json({ ...rest, preferredStore: mock.mockPreferredStore() });
     }
     const s = await dbSession(token);
     if (!s) return json({ error: "Sessie verlopen" }, 401);
@@ -124,6 +133,7 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
       displayName: s.displayName,
       householdId: Number(s.householdId),
       householdName: s.householdName,
+      preferredStore: s.preferredStore ?? null,
     });
   }
 
@@ -137,6 +147,54 @@ export async function handleApi(ctx: ApiContext): Promise<Response> {
     "householdId" in session ? session.householdId : session.household_id
   );
   const userId = Number("userId" in session ? session.userId : session.user_id);
+  const preferredStore = (
+    "preferredStore" in session
+      ? session.preferredStore
+      : "preferred_store" in session
+        ? (session as RowDataPacket).preferred_store
+        : mock.mockPreferredStore()
+  ) as StoreId | null;
+
+  if (method === "GET" && path === "/prices/dataset") {
+    const meta = await getPriceDatasetStatus();
+    return json(meta);
+  }
+
+  if (method === "GET" && path === "/prices") {
+    const ean = String(searchParams.get("ean") ?? "").replace(/\D/g, "");
+    const name = searchParams.get("name")?.trim() || undefined;
+    const refresh = searchParams.get("refresh") === "1";
+    if (ean.length < 8) {
+      return json({ error: "Ongeldige barcode" }, 400);
+    }
+    const quote = await getProductPrices(ean, {
+      productName: name,
+      preferredStore,
+      forceRefresh: refresh,
+    });
+    return json(quote);
+  }
+
+  if (method === "GET" && path === "/settings/preferred-store") {
+    return json({ preferredStore });
+  }
+
+  if (method === "PATCH" && path === "/settings/preferred-store") {
+    const storeRaw = body.store;
+    const store =
+      storeRaw == null || storeRaw === ""
+        ? null
+        : normalizeStoreId(String(storeRaw));
+    if (storeRaw != null && storeRaw !== "" && !store) {
+      return json({ error: "Onbekende winkel" }, 400);
+    }
+    if (!useDb) {
+      mock.mockSetPreferredStore(store);
+      return json({ preferredStore: store });
+    }
+    await setHouseholdPreferredStore(getPool(), householdId, store);
+    return json({ preferredStore: store });
+  }
 
   const listMatch = path.match(/^\/lists\/(\d+)\/items$/);
   if (listMatch) {

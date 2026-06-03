@@ -1,4 +1,5 @@
 import type { ListItem } from "@/lib/api/types";
+import type { StoreId } from "@/lib/server/prices/types";
 
 export interface MockSession {
   token: string;
@@ -17,6 +18,7 @@ interface MockState {
   householdId: number;
   householdName: string;
   inviteCode: string;
+  preferredStore: StoreId | null;
   users: MockUser[];
   nextItemId: number;
   sessions: Map<string, MockSession>;
@@ -33,6 +35,7 @@ function getState(): MockState {
       householdId: 1,
       householdName: "Thuis",
       inviteCode: "THUIS",
+      preferredStore: null,
       users: [
         { id: 1, displayName: "Ben" },
         { id: 2, displayName: "Ineke" },
@@ -126,4 +129,12 @@ export function mockDeleteItem(itemId: number): boolean {
   if (idx < 0) return false;
   state.items.splice(idx, 1);
   return true;
+}
+
+export function mockPreferredStore(): StoreId | null {
+  return getState().preferredStore;
+}
+
+export function mockSetPreferredStore(store: StoreId | null): void {
+  getState().preferredStore = store;
 }

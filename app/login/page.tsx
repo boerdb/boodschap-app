@@ -33,6 +33,7 @@ export default function LoginPage() {
         displayName: session.displayName,
         householdId: session.householdId,
         householdName: session.householdName,
+        preferredStore: session.preferredStore ?? null,
       });
       router.replace("/lijst");
     } catch (err) {

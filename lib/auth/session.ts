@@ -1,11 +1,14 @@
 const STORAGE_KEY = "boodschap_session";
 
+import type { StoreId } from "@/lib/api/types";
+
 export interface StoredSession {
   token: string;
   userId: number;
   displayName: string;
   householdId: number;
   householdName: string;
+  preferredStore?: StoreId | null;
 }
 
 export function getSession(): StoredSession | null {

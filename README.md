@@ -42,6 +42,7 @@ Zie [docs/DEPLOY.md](docs/DEPLOY.md) en [`.env.example`](.env.example).
 - Offline wachtrij + Serwist (productie)
 - Installatiebanner (Android + iOS) en update-popup
 - App-iconen: `npm run icons` (bron: `assets/boodschap-icon-source.svg`)
+- **Fase 2:** Checkjebon-dataset (~10 MB) in **MariaDB .14**, prijzen via Next .32, offline in IndexedDB — [docs/PRICES.md](docs/PRICES.md)
 
 ## Scripts
 

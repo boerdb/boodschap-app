@@ -42,3 +42,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lokale prijs-dataset (dagelijks via sync-checkjebon)
+/data/prices/*.json
+/scripts/_sample-supermarkets.json
