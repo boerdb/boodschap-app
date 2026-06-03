@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Boodschappenlijst PWA
 
-## Getting Started
+Next.js PWA met barcodescanner, Open Food Facts en gedeelde lijst via **MariaDB** (zelfde patroon als [med-track-pwa](C:\DEV\med-track-pwa)).
 
-First, run the development server:
+## Snel starten
+
+### Met database (aanbevolen)
 
 ```bash
+pip install paramiko
+python scripts/setup_database.py
+cp .env.example .env.local
+# Pas DATABASE_URL-wachtwoord aan in .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Zonder database (demo)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Log in met een naam en code **THUIS**.
 
-## Learn More
+## Configuratie
 
-To learn more about Next.js, take a look at the following resources:
+| Variabele | Beschrijving |
+|-----------|--------------|
+| `DATABASE_URL` | `mysql://boodschap:...@192.168.1.14:3306/boodschap` |
+| `APP_TIMEZONE` | `Europe/Amsterdam` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Zie [docs/DEPLOY.md](docs/DEPLOY.md) en [`.env.example`](.env.example).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Functies
 
-## Deploy on Vercel
+- Barcodescan (native + ZXing)
+- Open Food Facts v3
+- Gedeelde lijst (polling)
+- Licht/donker thema
+- Offline wachtrij + Serwist (productie)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Commando | Beschrijving |
+|----------|--------------|
+| `python scripts/setup_database.py` | Schema + user op 192.168.1.14 |
+| `python scripts/diagnose_db.py` | Tabellen controleren |
+| `npm run dev` | Ontwikkeling |
+| `npm run build` | Productie + service worker |
